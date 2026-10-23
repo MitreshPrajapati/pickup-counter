@@ -12,6 +12,7 @@
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "send-webhook": "tsx scripts/send-webhook.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
