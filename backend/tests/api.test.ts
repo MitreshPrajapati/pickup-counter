@@ -167,7 +167,7 @@ describe('Modular API Endpoints Integration Tests', () => {
       const res = await request(app).post(`/orders/${orderId}/pickup-claim`);
       expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
-      expect(res.body.error).toContain('Only PAID orders can be claimed');
+      expect(res.body.error.message).toContain('Only PAID orders can be claimed');
     });
   });
 });

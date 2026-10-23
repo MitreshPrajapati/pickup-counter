@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { z } from 'zod';
 import { ordersService } from './orders.service';
-import { AppError } from '../../utils/errors';
+import { asyncHandler } from '../../utils/asyncHandler';
 
 const createOrderSchema = z.object({
   items: z
@@ -15,48 +15,32 @@ const createOrderSchema = z.object({
 });
 
 export class OrdersController {
-  async createOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const parseResult = createOrderSchema.safeParse(req.body);
-      if (!parseResult.success) {
-        throw new AppError(parseResult.error.errors.map((e) => e.message).join(', '), 400);
-      }
+  createOrder = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const validatedData = createOrderSchema.parse(req.body);
+    const order = await ordersService.createOrder(validatedData.items);
+    res.status(201).json({
+      success: true,
+      data: order,
+    });
+  });
 
-      const order = await ordersService.createOrder(parseResult.data.items);
-      res.status(201).json({
-        success: true,
-        data: order,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getOrder = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const order = await ordersService.getOrderById(id);
+    res.status(200).json({
+      success: true,
+      data: order,
+    });
+  });
 
-  async getOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { id } = req.params;
-      const order = await ordersService.getOrderById(id);
-      res.status(200).json({
-        success: true,
-        data: order,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async claimPickup(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { id } = req.params;
-      const result = await ordersService.claimOrderPickup(id);
-      res.status(200).json({
-        success: true,
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  claimPickup = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const result = await ordersService.claimOrderPickup(id);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }
 
 export const ordersController = new OrdersController();

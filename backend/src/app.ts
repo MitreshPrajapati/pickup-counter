@@ -1,13 +1,17 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import cors from 'cors';
 import { config } from './config';
 import { RequestWithRawBody } from './types';
 import productsRouter from './modules/products/products.routes';
 import ordersRouter from './modules/orders/orders.routes';
 import paymentsRouter from './modules/payments/payments.routes';
-import { AppError } from './utils/errors';
+import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
+import { requestLogger } from './middlewares/logger.middleware';
 
 export const app = express();
+
+// Request logging middleware
+app.use(requestLogger);
 
 // Enable CORS for frontend client
 app.use(
@@ -36,19 +40,10 @@ app.use('/products', productsRouter);
 app.use('/orders', ordersRouter);
 app.use('/payments', paymentsRouter);
 
-// Global Error Handling Middleware
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  const statusCode = err instanceof AppError ? err.statusCode : err.status || 500;
-  const message = err.message || 'Internal Server Error';
+// 404 handler for unknown endpoints
+app.use(notFoundHandler);
 
-  if (statusCode >= 500) {
-    console.error('[Server Error]', err);
-  }
-
-  res.status(statusCode).json({
-    success: false,
-    error: message,
-  });
-});
+// Centralized Global Error Handling Middleware
+app.use(errorHandler);
 
 export default app;

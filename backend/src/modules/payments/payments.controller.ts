@@ -1,8 +1,8 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { paymentsService } from './payments.service';
 import { RequestWithRawBody } from '../../types';
-import { AppError } from '../../utils/errors';
+import { asyncHandler } from '../../utils/asyncHandler';
 
 const webhookSchema = z.object({
   eventId: z.string().min(1, 'eventId is required'),
@@ -12,29 +12,21 @@ const webhookSchema = z.object({
 });
 
 export class PaymentsController {
-  async handleWebhook(req: RequestWithRawBody, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const signatureHeader = req.headers['x-signature'] as string | undefined;
+  handleWebhook = asyncHandler(async (req: RequestWithRawBody, res: Response): Promise<void> => {
+    const signatureHeader = req.headers['x-signature'] as string | undefined;
+    const validatedData = webhookSchema.parse(req.body);
 
-      const parseResult = webhookSchema.safeParse(req.body);
-      if (!parseResult.success) {
-        throw new AppError(parseResult.error.errors.map((e) => e.message).join(', '), 400);
-      }
+    const result = await paymentsService.processPaymentWebhook(
+      req.rawBody,
+      signatureHeader,
+      validatedData
+    );
 
-      const result = await paymentsService.processPaymentWebhook(
-        req.rawBody,
-        signatureHeader,
-        parseResult.data
-      );
-
-      res.status(200).json({
-        success: true,
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  });
 }
 
 export const paymentsController = new PaymentsController();
