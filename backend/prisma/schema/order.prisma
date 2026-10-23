@@ -1,0 +1,26 @@
+model Order {
+  id             String         @id @default(uuid()) @db.Uuid
+  total_paise    Int
+  status         OrderStatus    @default(PENDING)
+  expires_at     DateTime       @db.Timestamptz
+  created_at     DateTime       @default(now()) @db.Timestamptz
+  updated_at     DateTime       @default(now()) @updatedAt @db.Timestamptz
+  items          OrderItem[]
+  payment_events PaymentEvent[]
+
+  @@index([status, expires_at], name: "idx_orders_status_expires")
+  @@map("orders")
+}
+
+model OrderItem {
+  id                      String   @id @default(uuid()) @db.Uuid
+  order_id                String   @db.Uuid
+  product_id              String   @db.Uuid
+  quantity                Int
+  price_paise_at_purchase Int
+  order                   Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product                 Product  @relation(fields: [product_id], references: [id])
+
+  @@index([product_id, order_id], name: "idx_order_items_product_order")
+  @@map("order_items")
+}

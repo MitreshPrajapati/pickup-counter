@@ -1,0 +1,10 @@
+enum OrderStatus {
+  PENDING
+  PAID
+  CLAIMED
+  EXPIRED
+  NEEDS_REVIEW
+  EXPIRED_PAID_PENDING_REFUND
+
+  @@map("order_status")
+}

@@ -1,0 +1,10 @@
+model Product {
+  id             String      @id @default(uuid()) @db.Uuid
+  name           String      @db.VarChar(255)
+  price_paise    Int
+  physical_stock Int
+  created_at     DateTime    @default(now()) @db.Timestamptz
+  order_items    OrderItem[]
+
+  @@map("products")
+}
